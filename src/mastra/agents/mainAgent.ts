@@ -74,7 +74,7 @@ Approach:
 
 Always strive to provide the most comprehensive and helpful assistance possible.
 Remember to use your extensive toolkit wisely to deliver exceptional results.`,
-      model: openai.responses("gpt-4o"),
+      model: openai.responses("gpt-5"),
       tools: allTools,
       memory: new Memory({
         options: {
@@ -96,7 +96,7 @@ Remember to use your extensive toolkit wisely to deliver exceptional results.`,
       name: "AI Assistant",
       description: "AI assistant with limited capabilities",
       instructions: `You are an AI assistant. While external tools are not available, you can still provide assistance using your knowledge and the available delegation tools.`,
-      model: openai.responses("gpt-4o"),
+      model: openai.responses("gpt-5"),
       tools: {
         delegateToSubAgent,
         webScraper,

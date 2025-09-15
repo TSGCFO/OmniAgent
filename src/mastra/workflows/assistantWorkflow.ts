@@ -1,133 +1,127 @@
 import { createWorkflow, createStep } from "../inngest";
 import { z } from "zod";
-import { createMainAgent } from "../agents/mainAgent";
+import { mainAgent } from "../agents";
 import { getClient } from "../../triggers/slackTriggers";
 import { format } from "node:util";
 
-// Step 1: Process message with the orchestrator agent
+// Step 1: Process message with the agent (ONLY call agent.generate())
 const processWithAgent = createStep({
   id: "process-with-agent",
-  description: "Process the user's message with the orchestrator agent",
+  description: "Call the agent to generate a response",
   inputSchema: z.object({
     message: z.string(),
     threadId: z.string(),
+    channel: z.string().optional(),
   }),
   outputSchema: z.object({
     response: z.string(),
     threadId: z.string(),
-    channel: z.string(),
-    timestamp: z.string().optional(),
+    channel: z.string().optional(),
   }),
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
-    logger?.info("🤖 [Workflow] Processing message with orchestrator agent", {
+    logger?.info("🤖 [Workflow Step 1] Calling agent.generate()", {
       threadId: inputData.threadId,
     });
     
-    try {
-      // Parse the Slack message payload
-      const payload = JSON.parse(inputData.message);
-      const event = payload.event;
-      const messageText = event.text || "";
-      const channel = event.channel;
-      const timestamp = event.thread_ts || event.ts;
-      
-      // Clean up the message (remove bot mentions)
-      const cleanedMessage = messageText.replace(/<@[A-Z0-9]+>/g, "").trim();
-      
-      logger?.info("📝 [Workflow] Cleaned message", { 
-        original: messageText,
-        cleaned: cleanedMessage 
-      });
-      
-      // Initialize and get the main agent
-      const agent = await createMainAgent();
-      
-      // Generate response using the agent
-      const { text } = await agent.generate([
-        { role: "user", content: cleanedMessage }
-      ], {
-        resourceId: "slack-bot",
-        threadId: inputData.threadId,
-        maxSteps: 10, // Allow multiple tool calls
-      });
-      
-      logger?.info("✅ [Workflow] Agent generated response", {
-        responseLength: text.length,
-      });
-      
-      return {
-        response: text,
-        threadId: inputData.threadId,
-        channel,
-        timestamp,
-      };
-    } catch (error) {
-      logger?.error("❌ [Workflow] Failed to process with agent", { error: format(error) });
-      throw error;
-    }
+    // ONLY call agent.generate() - no other logic
+    const { text } = await mainAgent.generate([
+      { role: "user", content: inputData.message }
+    ], {
+      resourceId: "slack-bot",
+      threadId: inputData.threadId,
+      maxSteps: 10,
+      onStepFinish: ({ toolCalls }) => {
+        if (toolCalls && toolCalls.length > 0) {
+          logger?.info("🔄 [Agent] Using tools", {
+            tools: toolCalls.map(t => t.toolName),
+          });
+        }
+      },
+    });
+    
+    logger?.info("✅ [Workflow Step 1] Agent response generated", {
+      responseLength: text.length,
+    });
+    
+    return {
+      response: text,
+      threadId: inputData.threadId,
+      channel: inputData.channel,
+    };
   },
 });
 
-// Step 2: Send the response back to Slack
+// Step 2: Send the response to Slack (ONLY send message)
 const sendSlackReply = createStep({
   id: "send-slack-reply",
-  description: "Send the agent's response back to Slack",
+  description: "Send the agent's response to Slack",
   inputSchema: z.object({
     response: z.string(),
     threadId: z.string(),
-    channel: z.string(),
-    timestamp: z.string().optional(),
+    channel: z.string().optional(),
   }),
   outputSchema: z.object({
     sent: z.boolean(),
-    messageTs: z.string().optional(),
   }),
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
-    logger?.info("💬 [Workflow] Sending reply to Slack", {
-      channel: inputData.channel,
-      threadId: inputData.threadId,
+    
+    // Parse channel and thread info from inputData if needed
+    let channel = inputData.channel;
+    let thread_ts = undefined;
+    
+    // If channel isn't provided, extract from threadId pattern
+    if (!channel && inputData.threadId.startsWith("slack/")) {
+      const parts = inputData.threadId.split("/");
+      if (parts.length >= 3) {
+        channel = parts[1];
+        thread_ts = parts[2];
+      }
+    }
+    
+    if (!channel) {
+      logger?.error("❌ [Workflow Step 2] No channel provided");
+      return { sent: false };
+    }
+    
+    logger?.info("💬 [Workflow Step 2] Sending to Slack", {
+      channel,
+      thread_ts,
     });
     
     try {
       const { slack } = await getClient();
       
-      // Send the message to Slack
-      const result = await slack.chat.postMessage({
-        channel: inputData.channel,
+      // ONLY send the message - no other logic
+      await slack.chat.postMessage({
+        channel,
         text: inputData.response,
-        thread_ts: inputData.timestamp, // Reply in thread if available
+        thread_ts,
       });
       
-      logger?.info("✅ [Workflow] Successfully sent Slack reply", {
-        messageTs: result.ts,
-      });
-      
-      return {
-        sent: true,
-        messageTs: result.ts,
-      };
+      logger?.info("✅ [Workflow Step 2] Sent to Slack");
+      return { sent: true };
     } catch (error) {
-      logger?.error("❌ [Workflow] Failed to send Slack reply", { error: format(error) });
-      return {
-        sent: false,
-      };
+      logger?.error("❌ [Workflow Step 2] Failed to send", {
+        error: format(error),
+      });
+      return { sent: false };
     }
   },
 });
 
-// Create the workflow
+// Create the workflow with exactly 2 steps
 export const assistantWorkflow = createWorkflow({
   id: "assistant-workflow",
-  description: "Multi-agent AI assistant workflow for Slack messages",
+  description: "AI assistant workflow with agent and Slack reply",
   inputSchema: z.object({
     message: z.string(),
     threadId: z.string(),
+    channel: z.string().optional(),
   }),
   outputSchema: z.object({
     sent: z.boolean(),
-    messageTs: z.string().optional(),
   }),
 })
   .then(processWithAgent)

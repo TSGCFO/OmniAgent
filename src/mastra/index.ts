@@ -11,7 +11,8 @@ import { format } from "node:util";
 import { sharedPostgresStorage } from "./storage";
 import { inngest, inngestServe } from "./inngest";
 import { assistantWorkflow } from "./workflows/assistantWorkflow";
-import { createMainAgent } from "./agents/mainAgent";
+import { mainAgent } from "./agents";
+import { getMCPTools } from "./mcp-client";
 import { delegateToSubAgent } from "./tools/delegateToSubAgent";
 import { webScraper } from "./tools/webScraper";
 import { deepResearch } from "./tools/deepResearch";
@@ -59,26 +60,44 @@ class ProductionPinoLogger extends MastraLogger {
   }
 }
 
-// Initialize main agent on startup
-let mainAgentInstance: any = null;
+// Initialize tools for the main agent on startup
 (async () => {
   try {
-    mainAgentInstance = await createMainAgent();
-    console.log("✅ Main AI assistant agent initialized successfully");
-    // Register the agent with mastra after initialization
-    if (mainAgentInstance && mastra) {
-      // We'll add it to mastra after it's created
-    }
+    console.log("🚀 Initializing agent tools...");
+    
+    // Get MCP tools from the server
+    const mcpTools = await getMCPTools();
+    
+    // Add all tools to the main agent
+    const allTools = {
+      ...mcpTools,
+      delegateToSubAgent,
+      webScraper,
+      deepResearch,
+      selfLearning,
+    };
+    
+    // Update the agent's tools
+    Object.assign(mainAgent.tools, allTools);
+    
+    console.log(`✅ Main agent initialized with ${Object.keys(allTools).length} tools`);
   } catch (error) {
-    console.error("❌ Failed to initialize main agent:", error);
+    console.error("❌ Failed to initialize agent tools:", error);
+    // Continue with just the custom tools
+    Object.assign(mainAgent.tools, {
+      delegateToSubAgent,
+      webScraper,
+      deepResearch,
+      selfLearning,
+    });
+    console.log("⚠️ Using fallback tools only");
   }
 })();
 
 export const mastra = new Mastra({
   storage: sharedPostgresStorage,
   agents: {
-    // Agent will be added dynamically after initialization
-    // Only one agent is allowed per application
+    mainAgent,
   },
   workflows: { assistantWorkflow },
   mcpServers: {
@@ -188,13 +207,19 @@ export const mastra = new Mastra({
             }
           }
 
+          // Extract and clean the message text
+          const messageText = triggerInfo.payload?.event?.text || "";
+          const cleanedMessage = messageText.replace(/<@[A-Z0-9]+>/g, "").trim();
+          const thread_ts = triggerInfo.payload?.event?.thread_ts;
+          
           // Start the workflow to process the message
           logger?.info("🚀 [Trigger] Starting assistant workflow");
           const run = await mastra.getWorkflow("assistantWorkflow").createRunAsync();
           return await run.start({
             inputData: {
-              message: JSON.stringify(triggerInfo.payload),
-              threadId: `slack/${triggerInfo.payload.event.thread_ts || triggerInfo.payload.event.ts}`,
+              message: cleanedMessage, // Send cleaned message directly
+              threadId: `slack/${channel}/${thread_ts || timestamp}`,
+              channel: channel,
             }
           });
         },
