@@ -2,6 +2,8 @@ import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { sharedPostgresStorage } from "../storage";
 import { createOpenAI } from "@ai-sdk/openai";
+import { semanticStorage } from "../tools/semanticStorage";
+import { semanticRecall } from "../tools/semanticRecall";
 
 const openai = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || undefined,
@@ -24,6 +26,8 @@ Your capabilities include:
 8. Prioritizing important emails
 9. Unsubscribing from unwanted emails
 10. Email analytics and insights
+11. Storing important email communications and templates with semantic embeddings
+12. Recalling relevant past emails and templates using semantic similarity
 
 Email management approach:
 - Maintain professional tone in all communications
@@ -34,9 +38,14 @@ Email management approach:
 - Track important conversations
 
 You have access to email services through the MCP server including Gmail, Outlook, and other email providers.
-Focus on efficient email management and clear communication.`,
+You also have semantic memory capabilities to store and recall important emails, templates, and communication patterns.
+Focus on efficient email management and clear communication.
+Use semanticStorage to save important emails/templates and semanticRecall to retrieve relevant past communications.`,
   model: openai.responses("gpt-4o"),
-  tools: {},
+  tools: {
+    semanticStorage,
+    semanticRecall,
+  },
   memory: new Memory({
     options: {
       threads: {

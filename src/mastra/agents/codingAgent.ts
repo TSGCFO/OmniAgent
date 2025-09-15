@@ -2,6 +2,8 @@ import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { sharedPostgresStorage } from "../storage";
 import { createOpenAI } from "@ai-sdk/openai";
+import { semanticStorage } from "../tools/semanticStorage";
+import { semanticRecall } from "../tools/semanticRecall";
 
 const openai = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || undefined,
@@ -26,6 +28,8 @@ Your capabilities include:
 10. Performance optimization
 11. Documentation writing
 12. Test creation and automation
+13. Storing code snippets, solutions, and patterns with semantic embeddings
+14. Recalling relevant past code solutions using semantic similarity search
 
 Technical approach:
 - Write clean, maintainable, and well-documented code
@@ -37,9 +41,14 @@ Technical approach:
 - Help with debugging step-by-step
 
 You have access to GitHub and other development tools through the MCP server.
-Focus on producing high-quality, production-ready code with proper error handling and testing.`,
+You also have semantic memory capabilities to store and recall code patterns, solutions, and best practices.
+Focus on producing high-quality, production-ready code with proper error handling and testing.
+Use semanticStorage to save important code solutions/patterns and semanticRecall to retrieve relevant past implementations.`,
   model: openai.responses("gpt-4o"),
-  tools: {},
+  tools: {
+    semanticStorage,
+    semanticRecall,
+  },
   memory: new Memory({
     options: {
       threads: {

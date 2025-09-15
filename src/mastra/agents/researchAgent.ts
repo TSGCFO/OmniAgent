@@ -2,6 +2,8 @@ import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { sharedPostgresStorage } from "../storage";
 import { createOpenAI } from "@ai-sdk/openai";
+import { semanticStorage } from "../tools/semanticStorage";
+import { semanticRecall } from "../tools/semanticRecall";
 
 const openai = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || undefined,
@@ -21,6 +23,8 @@ Your capabilities include:
 5. Scraping and extracting data from websites
 6. Finding academic papers, articles, and documentation
 7. Cross-referencing information for accuracy
+8. Storing important research findings with semantic embeddings for future retrieval
+9. Recalling relevant past research using semantic similarity search
 
 Research approach:
 - Always verify information from multiple sources
@@ -31,9 +35,14 @@ Research approach:
 - Maintain objectivity and accuracy
 
 You have access to web search, scraping, and various research tools through the MCP server.
-Focus on providing thorough, well-researched, and accurate information.`,
+You also have semantic memory capabilities to store and recall important research findings.
+Focus on providing thorough, well-researched, and accurate information.
+Use semanticStorage to save important research insights and semanticRecall to retrieve relevant past findings.`,
   model: openai.responses("gpt-4o"),
-  tools: {},
+  tools: {
+    semanticStorage,
+    semanticRecall,
+  },
   memory: new Memory({
     options: {
       threads: {

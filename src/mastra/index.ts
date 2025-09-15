@@ -17,6 +17,8 @@ import { delegateToSubAgent } from "./tools/delegateToSubAgent";
 import { webScraper } from "./tools/webScraper";
 import { deepResearch } from "./tools/deepResearch";
 import { selfLearning } from "./tools/selfLearning";
+import { semanticStorage } from "./tools/semanticStorage";
+import { semanticRecall } from "./tools/semanticRecall";
 import { getClient, registerSlackTrigger } from "../triggers/slackTriggers";
 
 class ProductionPinoLogger extends MastraLogger {
@@ -75,6 +77,8 @@ class ProductionPinoLogger extends MastraLogger {
       webScraper,
       deepResearch,
       selfLearning,
+      semanticStorage,
+      semanticRecall,
     };
     
     // Update the agent's tools
@@ -89,6 +93,8 @@ class ProductionPinoLogger extends MastraLogger {
       webScraper,
       deepResearch,
       selfLearning,
+      semanticStorage,
+      semanticRecall,
     });
     console.log("⚠️ Using fallback tools only");
   }
@@ -109,6 +115,8 @@ export const mastra = new Mastra({
         webScraper,
         deepResearch,
         selfLearning,
+        semanticStorage,
+        semanticRecall,
       },
     }),
   },

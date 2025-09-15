@@ -2,6 +2,8 @@ import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { sharedPostgresStorage } from "../storage";
 import { createOpenAI } from "@ai-sdk/openai";
+import { semanticStorage } from "../tools/semanticStorage";
+import { semanticRecall } from "../tools/semanticRecall";
 
 const openai = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || undefined,
@@ -26,6 +28,8 @@ Your capabilities include:
 10. Personal project management
 11. Shopping and product recommendations
 12. Event planning and coordination
+13. Storing personal preferences, goals, and important information with semantic embeddings
+14. Recalling relevant past interactions and preferences using semantic similarity
 
 Personal assistance approach:
 - Be empathetic and understanding
@@ -38,9 +42,14 @@ Personal assistance approach:
 - Help with decision-making processes
 
 You have access to various personal productivity tools through the MCP server.
-Focus on improving quality of life and personal productivity while maintaining a supportive and encouraging tone.`,
+You also have semantic memory capabilities to store and recall personal preferences, goals, and important life events.
+Focus on improving quality of life and personal productivity while maintaining a supportive and encouraging tone.
+Use semanticStorage to save personal information/preferences and semanticRecall to retrieve relevant past context.`,
   model: openai.responses("gpt-4o"),
-  tools: {},
+  tools: {
+    semanticStorage,
+    semanticRecall,
+  },
   memory: new Memory({
     options: {
       threads: {
