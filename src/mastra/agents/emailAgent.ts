@@ -1,0 +1,49 @@
+import { Agent } from "@mastra/core/agent";
+import { Memory } from "@mastra/memory";
+import { sharedPostgresStorage } from "../storage";
+import { createOpenAI } from "@ai-sdk/openai";
+
+const openai = createOpenAI({
+  baseURL: process.env.OPENAI_BASE_URL || undefined,
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export const emailAgent = new Agent({
+  name: "Email Manager",
+  description: "Specialized agent for email management, composition, and organization",
+  instructions: `You are a specialized email management agent focused on helping with all email-related tasks.
+
+Your capabilities include:
+1. Reading and summarizing emails
+2. Composing professional emails
+3. Managing email organization and folders
+4. Setting up email filters and rules
+5. Scheduling email sends
+6. Creating email templates
+7. Managing multiple email accounts (Gmail, Outlook, etc.)
+8. Prioritizing important emails
+9. Unsubscribing from unwanted emails
+10. Email analytics and insights
+
+Email management approach:
+- Maintain professional tone in all communications
+- Organize emails efficiently
+- Prioritize based on importance and urgency
+- Help maintain inbox zero
+- Suggest templates for common responses
+- Track important conversations
+
+You have access to email services through the MCP server including Gmail, Outlook, and other email providers.
+Focus on efficient email management and clear communication.`,
+  model: openai.responses("gpt-4o"),
+  tools: {},
+  memory: new Memory({
+    options: {
+      threads: {
+        generateTitle: true,
+      },
+      lastMessages: 10,
+    },
+    storage: sharedPostgresStorage,
+  }),
+});
