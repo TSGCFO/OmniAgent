@@ -2,9 +2,7 @@ import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { createOpenAI } from "@ai-sdk/openai";
 import { embed } from "ai";
-import pg from "pg";
-
-const { Pool } = pg;
+import { sharedDbPool } from "../storage";
 
 // Initialize OpenAI for embeddings
 const openai = createOpenAI({
@@ -37,10 +35,10 @@ export const semanticStorage = createTool({
     });
     
     try {
-      // Generate embedding using OpenAI's text-embedding-ada-002
-      logger?.info("📝 [SemanticStorage] Generating embedding with text-embedding-ada-002");
+      // Generate embedding using OpenAI's text-embedding-3-small
+      logger?.info("📝 [SemanticStorage] Generating embedding with text-embedding-3-small");
       const embeddingResult = await embed({
-        model: openai.embedding("text-embedding-ada-002"),
+        model: openai.embedding("text-embedding-3-small"),
         value: content,
       });
       
@@ -50,12 +48,8 @@ export const semanticStorage = createTool({
         sampleValues: embedding.slice(0, 3), // Log first 3 values as sample
       });
       
-      // Connect to PostgreSQL
-      const pool = new Pool({
-        connectionString: process.env.DATABASE_URL || "postgresql://localhost:5432/mastra",
-      });
-      
-      logger?.info("🔌 [SemanticStorage] Connecting to PostgreSQL database");
+      // Use shared PostgreSQL storage
+      logger?.info("🔌 [SemanticStorage] Using shared PostgreSQL storage");
       
       // Store in database
       const query = `
@@ -79,15 +73,13 @@ export const semanticStorage = createTool({
         metadataKeys: Object.keys(metadata || {}),
       });
       
-      const result = await pool.query(query, [
+      const result = await sharedDbPool.query(query, [
         content,
         embeddingJson,
         metadataJson,
         agentName || null,
         threadId || null,
       ]);
-      
-      await pool.end();
       
       const insertedId = result.rows[0]?.id;
       const createdAt = result.rows[0]?.created_at;

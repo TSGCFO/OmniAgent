@@ -2,6 +2,8 @@ import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 import { sharedPostgresStorage } from "../storage";
 import { createOpenAI } from "@ai-sdk/openai";
+import { semanticStorage } from "../tools/semanticStorage";
+import { semanticRecall } from "../tools/semanticRecall";
 
 const openai = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || undefined,
@@ -47,7 +49,10 @@ Always strive to provide the most comprehensive and helpful assistance possible.
 Remember to use your extensive toolkit wisely to deliver exceptional results.`,
   model: openai.responses("gpt-5"),
   tools: {
-    // Tools will be added by the initialization process
+    // Semantic memory tools
+    semanticStorage,
+    semanticRecall,
+    // Other tools will be added by the initialization process
   },
   memory: new Memory({
     options: {

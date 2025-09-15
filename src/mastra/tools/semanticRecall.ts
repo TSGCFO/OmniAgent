@@ -2,9 +2,7 @@ import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { createOpenAI } from "@ai-sdk/openai";
 import { embed } from "ai";
-import pg from "pg";
-
-const { Pool } = pg;
+import { sharedDbPool } from "../storage";
 
 // Initialize OpenAI for embeddings
 const openai = createOpenAI({
@@ -75,9 +73,9 @@ export const semanticRecall = createTool({
     
     try {
       // Generate embedding for the query
-      logger?.info("📝 [SemanticRecall] Generating query embedding with text-embedding-ada-002");
+      logger?.info("📝 [SemanticRecall] Generating query embedding with text-embedding-3-small");
       const embeddingResult = await embed({
-        model: openai.embedding("text-embedding-ada-002"),
+        model: openai.embedding("text-embedding-3-small"),
         value: query,
       });
       
@@ -87,12 +85,8 @@ export const semanticRecall = createTool({
         sampleValues: queryEmbedding.slice(0, 3),
       });
       
-      // Connect to PostgreSQL
-      const pool = new Pool({
-        connectionString: process.env.DATABASE_URL || "postgresql://localhost:5432/mastra",
-      });
-      
-      logger?.info("🔌 [SemanticRecall] Connecting to PostgreSQL database");
+      // Use shared PostgreSQL storage
+      logger?.info("🔌 [SemanticRecall] Using shared PostgreSQL storage");
       
       // Build query with optional filters
       let queryStr = `
@@ -130,8 +124,7 @@ export const semanticRecall = createTool({
         hasThreadFilter: !!threadId,
       });
       
-      const result = await pool.query(queryStr, queryParams);
-      await pool.end();
+      const result = await sharedDbPool.query(queryStr, queryParams);
       
       logger?.info("📊 [SemanticRecall] Retrieved memories from database", {
         totalMemories: result.rows.length,
