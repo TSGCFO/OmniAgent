@@ -6,9 +6,17 @@ import pino from "pino";
 import { MCPServer } from "@mastra/mcp";
 import { NonRetriableError } from "inngest";
 import { z } from "zod";
+import { format } from "node:util";
 
 import { sharedPostgresStorage } from "./storage";
 import { inngest, inngestServe } from "./inngest";
+import { assistantWorkflow } from "./workflows/assistantWorkflow";
+import { createMainAgent } from "./agents/mainAgent";
+import { delegateToSubAgent } from "./tools/delegateToSubAgent";
+import { webScraper } from "./tools/webScraper";
+import { deepResearch } from "./tools/deepResearch";
+import { selfLearning } from "./tools/selfLearning";
+import { getClient, registerSlackTrigger } from "../triggers/slackTriggers";
 
 class ProductionPinoLogger extends MastraLogger {
   protected logger: pino.Logger;
@@ -51,15 +59,38 @@ class ProductionPinoLogger extends MastraLogger {
   }
 }
 
+// Initialize main agent on startup
+let mainAgentInstance: any = null;
+(async () => {
+  try {
+    mainAgentInstance = await createMainAgent();
+    console.log("✅ Main AI assistant agent initialized successfully");
+    // Register the agent with mastra after initialization
+    if (mainAgentInstance && mastra) {
+      // We'll add it to mastra after it's created
+    }
+  } catch (error) {
+    console.error("❌ Failed to initialize main agent:", error);
+  }
+})();
+
 export const mastra = new Mastra({
   storage: sharedPostgresStorage,
-  agents: {},
-  workflows: {},
+  agents: {
+    // Agent will be added dynamically after initialization
+    // Only one agent is allowed per application
+  },
+  workflows: { assistantWorkflow },
   mcpServers: {
     allTools: new MCPServer({
       name: "allTools",
       version: "1.0.0",
-      tools: {},
+      tools: {
+        delegateToSubAgent,
+        webScraper,
+        deepResearch,
+        selfLearning,
+      },
     }),
   },
   bundler: {
@@ -122,6 +153,52 @@ export const mastra = new Mastra({
         // 3. Establishing a publish-subscribe system for real-time monitoring
         //    through the workflow:${workflowId}:${runId} channel
       },
+      // Slack trigger for the AI assistant
+      ...registerSlackTrigger({
+        triggerType: "slack/message.channels",
+        handler: async (mastra: Mastra, triggerInfo) => {
+          const logger = mastra.getLogger();
+          const { slack, auth } = await getClient();
+          logger?.info("📝 [Trigger] Slack message received", { triggerInfo });
+
+          // Check if we should respond to this message
+          const isDirectMessage = triggerInfo.payload?.event?.channel_type === "im";
+          const isMention = triggerInfo.payload?.event?.text?.includes(`<@${auth.user_id}>`);
+          const shouldRespond = isDirectMessage || isMention;
+          const channel = triggerInfo.payload?.event?.channel;
+          const timestamp = triggerInfo.payload?.event?.ts;
+
+          if (!shouldRespond) {
+            logger?.info("🔕 [Trigger] Ignoring message (not DM or mention)");
+            return null;
+          }
+
+          // React to the message to show we're processing it
+          if (channel && timestamp) {
+            try {
+              await slack.reactions.add({
+                channel,
+                timestamp,
+                name: "hourglass_flowing_sand",
+              });
+            } catch (error) {
+              logger?.error("📝 [Slack Trigger] Error adding reaction", {
+                error: format(error),
+              });
+            }
+          }
+
+          // Start the workflow to process the message
+          logger?.info("🚀 [Trigger] Starting assistant workflow");
+          const run = await mastra.getWorkflow("assistantWorkflow").createRunAsync();
+          return await run.start({
+            inputData: {
+              message: JSON.stringify(triggerInfo.payload),
+              threadId: `slack/${triggerInfo.payload.event.thread_ts || triggerInfo.payload.event.ts}`,
+            }
+          });
+        },
+      }),
     ],
   },
   logger:

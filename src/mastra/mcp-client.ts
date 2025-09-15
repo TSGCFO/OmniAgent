@@ -7,7 +7,7 @@ export const mcpClient = new MCPClient({
       url: new URL("https://rube.app/mcp"),
       requestInit: {
         headers: {
-          "Authorization": process.env.RUBE_MCP_TOKEN || "",
+          "Authorization": `Bearer ${process.env.RUBE_MCP_TOKEN || ""}`,
         },
       },
     },
