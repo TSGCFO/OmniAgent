@@ -46,7 +46,7 @@ IMPORTANT FOR MEMORY:
 - Use the updateWorkingMemory tool to store important email patterns and contacts
 - Store email templates, frequent contacts, and communication preferences
 - Update memory explicitly when you identify important communication patterns`,
-  model: openai.responses("gpt-5"),
+  model: openai.responses("gpt-4o"),
   tools: {
     semanticStorage,
     semanticRecall,

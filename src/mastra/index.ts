@@ -11,8 +11,7 @@ import { format } from "node:util";
 import { sharedPostgresStorage } from "./storage";
 import { inngest, inngestServe } from "./inngest";
 import { assistantWorkflow } from "./workflows/assistantWorkflow";
-import { mainAgent } from "./agents";
-import { getMCPTools } from "./mcp-client";
+import { initializeMainAgent } from "./agents";
 import { delegateToSubAgent } from "./tools/delegateToSubAgent";
 import { webScraper } from "./tools/webScraper";
 import { deepResearch } from "./tools/deepResearch";
@@ -62,48 +61,11 @@ class ProductionPinoLogger extends MastraLogger {
   }
 }
 
-// Initialize tools for the main agent on startup
-(async () => {
-  try {
-    console.log("🚀 Initializing agent tools...");
-    
-    // Get MCP tools from the server
-    const mcpTools = await getMCPTools();
-    
-    // Add all tools to the main agent
-    const allTools = {
-      ...mcpTools,
-      delegateToSubAgent,
-      webScraper,
-      deepResearch,
-      selfLearning,
-      semanticStorage,
-      semanticRecall,
-    };
-    
-    // Update the agent's tools
-    Object.assign(mainAgent.tools, allTools);
-    
-    console.log(`✅ Main agent initialized with ${Object.keys(allTools).length} tools`);
-  } catch (error) {
-    console.error("❌ Failed to initialize agent tools:", error);
-    // Continue with just the custom tools
-    Object.assign(mainAgent.tools, {
-      delegateToSubAgent,
-      webScraper,
-      deepResearch,
-      selfLearning,
-      semanticStorage,
-      semanticRecall,
-    });
-    console.log("⚠️ Using fallback tools only");
-  }
-})();
-
+// Create Mastra instance first
 export const mastra = new Mastra({
   storage: sharedPostgresStorage,
   agents: {
-    mainAgent,
+    // We'll add the initialized agent dynamically
   },
   workflows: { assistantWorkflow },
   mcpServers: {
@@ -245,6 +207,25 @@ export const mastra = new Mastra({
           level: "info",
         }),
 });
+
+// Initialize the main agent with all tools including MCP after Mastra is created
+(async () => {
+  try {
+    console.log("🚀 Initializing main agent with MCP tools...");
+    const initializedMainAgent = await initializeMainAgent();
+    
+    // Add the initialized agent to the Mastra instance
+    (mastra as any).agents.mainAgent = initializedMainAgent;
+    
+    console.log("✅ Main agent initialization complete and added to Mastra");
+  } catch (error) {
+    console.error("❌ Failed to initialize main agent:", error);
+    // Add fallback agent
+    const { mainAgent: fallbackAgent } = await import("./agents");
+    (mastra as any).agents.mainAgent = fallbackAgent;
+    console.log("⚠️ Using fallback agent");
+  }
+})();
 
 /*  Sanity check 1: Throw an error if there are more than 1 workflows.  */
 // !!!!!! Do not remove this check. !!!!!!

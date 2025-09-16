@@ -49,7 +49,7 @@ IMPORTANT FOR MEMORY:
 - Use the updateWorkingMemory tool to store coding patterns and solutions
 - Store preferred frameworks, debugging approaches, and code patterns
 - Update memory explicitly when you discover useful solutions or approaches`,
-  model: openai.responses("gpt-5"),
+  model: openai.responses("gpt-4o"),
   tools: {
     semanticStorage,
     semanticRecall,

@@ -43,7 +43,7 @@ IMPORTANT FOR MEMORY:
 - Use the updateWorkingMemory tool to store important research findings
 - Store key discoveries, trusted sources, and research patterns
 - Update memory explicitly when you find significant information`,
-  model: openai.responses("gpt-5"),
+  model: openai.responses("gpt-4o"),
   tools: {
     semanticStorage,
     semanticRecall,
