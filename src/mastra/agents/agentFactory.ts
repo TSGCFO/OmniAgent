@@ -22,8 +22,13 @@ export async function createMainAgent() {
   // Load MCP tools first - this is critical!
   let mcpTools = {};
   try {
-    mcpTools = await getMCPTools();
-    console.log(`✅ Loaded ${Object.keys(mcpTools).length} MCP tools successfully`);
+    // Only try to load MCP tools if the token is configured
+    if (process.env.RUBE_MCP_TOKEN) {
+      mcpTools = await getMCPTools();
+      console.log(`✅ Loaded ${Object.keys(mcpTools).length} MCP tools successfully`);
+    } else {
+      console.log("ℹ️ RUBE_MCP_TOKEN not configured, skipping MCP tools");
+    }
   } catch (error) {
     console.error("❌ Failed to load MCP tools:", error);
     console.log("⚠️ Continuing without MCP tools");
