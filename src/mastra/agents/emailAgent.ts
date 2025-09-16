@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
-import { sharedPostgresStorage } from "../storage";
+import { PostgresStore } from "@mastra/pg";
 import { createOpenAI } from "@ai-sdk/openai";
 import { semanticStorage } from "../tools/semanticStorage";
 import { semanticRecall } from "../tools/semanticRecall";
@@ -40,19 +40,44 @@ Email management approach:
 You have access to email services through the MCP server including Gmail, Outlook, and other email providers.
 You also have semantic memory capabilities to store and recall important emails, templates, and communication patterns.
 Focus on efficient email management and clear communication.
-Use semanticStorage to save important emails/templates and semanticRecall to retrieve relevant past communications.`,
-  model: openai.responses("gpt-4o"),
+Use semanticStorage to save important emails/templates and semanticRecall to retrieve relevant past communications.
+
+IMPORTANT FOR MEMORY:
+- Use the updateWorkingMemory tool to store important email patterns and contacts
+- Store email templates, frequent contacts, and communication preferences
+- Update memory explicitly when you identify important communication patterns`,
+  model: openai.responses("gpt-5"),
   tools: {
     semanticStorage,
     semanticRecall,
   },
   memory: new Memory({
+    storage: new PostgresStore({
+      connectionString: process.env.DATABASE_URL!
+    }),
     options: {
       threads: {
-        generateTitle: true,
+        generateTitle: true
       },
       lastMessages: 10,
-    },
-    storage: sharedPostgresStorage,
+      workingMemory: {
+        enabled: true,
+        scope: 'resource',
+        template: `# Email Context
+## Email Accounts
+- **Primary Email**: 
+- **Email Aliases**: 
+
+## Communication Patterns
+- **Frequent Contacts**: 
+- **Email Templates Used**: 
+- **Signature Preferences**: 
+
+## Email Management
+- **Filtering Rules**: 
+- **Priority Senders**: 
+- **Response Templates**: `
+      }
+    }
   }),
 });

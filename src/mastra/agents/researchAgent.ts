@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
-import { sharedPostgresStorage } from "../storage";
+import { PostgresStore } from "@mastra/pg";
 import { createOpenAI } from "@ai-sdk/openai";
 import { semanticStorage } from "../tools/semanticStorage";
 import { semanticRecall } from "../tools/semanticRecall";
@@ -37,19 +37,44 @@ Research approach:
 You have access to web search, scraping, and various research tools through the MCP server.
 You also have semantic memory capabilities to store and recall important research findings.
 Focus on providing thorough, well-researched, and accurate information.
-Use semanticStorage to save important research insights and semanticRecall to retrieve relevant past findings.`,
-  model: openai.responses("gpt-4o"),
+Use semanticStorage to save important research insights and semanticRecall to retrieve relevant past findings.
+
+IMPORTANT FOR MEMORY:
+- Use the updateWorkingMemory tool to store important research findings
+- Store key discoveries, trusted sources, and research patterns
+- Update memory explicitly when you find significant information`,
+  model: openai.responses("gpt-5"),
   tools: {
     semanticStorage,
     semanticRecall,
   },
   memory: new Memory({
+    storage: new PostgresStore({
+      connectionString: process.env.DATABASE_URL!
+    }),
     options: {
       threads: {
-        generateTitle: true,
+        generateTitle: true
       },
-      lastMessages: 15,
-    },
-    storage: sharedPostgresStorage,
+      lastMessages: 10,
+      workingMemory: {
+        enabled: true,
+        scope: 'resource',
+        template: `# Research Memory
+## Topics of Interest
+- **Primary Research Areas**: 
+- **Recurring Questions**: 
+
+## Key Findings
+- **Important Discoveries**: 
+- **Trusted Sources**: 
+- **Research Patterns**: 
+
+## Research Preferences
+- **Preferred Depth**: 
+- **Source Types**: 
+- **Quality Thresholds**: `
+      }
+    }
   }),
 });

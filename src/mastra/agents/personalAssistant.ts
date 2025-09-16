@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
-import { sharedPostgresStorage } from "../storage";
+import { PostgresStore } from "@mastra/pg";
 import { createOpenAI } from "@ai-sdk/openai";
 import { semanticStorage } from "../tools/semanticStorage";
 import { semanticRecall } from "../tools/semanticRecall";
@@ -44,19 +44,45 @@ Personal assistance approach:
 You have access to various personal productivity tools through the MCP server.
 You also have semantic memory capabilities to store and recall personal preferences, goals, and important life events.
 Focus on improving quality of life and personal productivity while maintaining a supportive and encouraging tone.
-Use semanticStorage to save personal information/preferences and semanticRecall to retrieve relevant past context.`,
-  model: openai.responses("gpt-4o"),
+Use semanticStorage to save personal information/preferences and semanticRecall to retrieve relevant past context.
+
+IMPORTANT FOR MEMORY:
+- Use the updateWorkingMemory tool to store personal preferences and routines
+- Store schedule patterns, interests, and task management preferences
+- Update memory explicitly when you learn about personal preferences or goals`,
+  model: openai.responses("gpt-5"),
   tools: {
     semanticStorage,
     semanticRecall,
   },
   memory: new Memory({
+    storage: new PostgresStore({
+      connectionString: process.env.DATABASE_URL!
+    }),
     options: {
       threads: {
-        generateTitle: true,
+        generateTitle: true
       },
       lastMessages: 10,
-    },
-    storage: sharedPostgresStorage,
+      workingMemory: {
+        enabled: true,
+        scope: 'resource',
+        template: `# Personal Information
+## Schedule & Routine
+- **Daily Schedule**: 
+- **Time Zone**: 
+- **Regular Meetings**: 
+
+## Personal Preferences
+- **Interests/Hobbies**: 
+- **Dietary Preferences**: 
+- **Important Dates**: 
+
+## Task Management
+- **Task Priorities**: 
+- **Preferred Reminder Style**: 
+- **Organization Methods**: `
+      }
+    }
   }),
 });

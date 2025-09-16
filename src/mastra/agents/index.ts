@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
-import { sharedPostgresStorage } from "../storage";
+import { PostgresStore } from "@mastra/pg";
 import { createOpenAI } from "@ai-sdk/openai";
 import { semanticStorage } from "../tools/semanticStorage";
 import { semanticRecall } from "../tools/semanticRecall";
@@ -45,6 +45,12 @@ Approach:
 - Maintain context across conversations
 - Provide well-researched, accurate information
 
+IMPORTANT FOR MEMORY:
+- Automatically update working memory whenever you learn new information about the user
+- Working memory persists across all conversations
+- Update memory naturally in your responses
+- Be proactive in remembering user preferences, goals, and context
+
 Always strive to provide the most comprehensive and helpful assistance possible.
 Remember to use your extensive toolkit wisely to deliver exceptional results.`,
   model: openai.responses("gpt-5"),
@@ -55,12 +61,42 @@ Remember to use your extensive toolkit wisely to deliver exceptional results.`,
     // Other tools will be added by the initialization process
   },
   memory: new Memory({
+    storage: new PostgresStore({
+      connectionString: process.env.DATABASE_URL!
+    }),
     options: {
       threads: {
-        generateTitle: true,
+        generateTitle: true
       },
       lastMessages: 20,
-    },
-    storage: sharedPostgresStorage,
+      workingMemory: {
+        enabled: true,
+        scope: 'resource',
+        template: `# User Profile
+## Identity
+- **Name**: 
+- **Role/Title**: 
+- **Primary Goals**: 
+
+## Preferences
+- **Communication Style**: 
+- **Working Hours**: 
+- **Response Detail Level**: 
+
+## Current Context
+- **Active Projects**: 
+- **Current Focus**: 
+- **Important Deadlines**: 
+
+## Technical Environment
+- **Tech Stack**: 
+- **Tools & Services**: 
+- **API Keys/Integrations Available**: 
+
+## Notes & Reminders
+- **Important Notes**: 
+- **Follow-ups Needed**: `
+      }
+    }
   }),
 });

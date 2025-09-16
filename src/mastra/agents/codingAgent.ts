@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
-import { sharedPostgresStorage } from "../storage";
+import { PostgresStore } from "@mastra/pg";
 import { createOpenAI } from "@ai-sdk/openai";
 import { semanticStorage } from "../tools/semanticStorage";
 import { semanticRecall } from "../tools/semanticRecall";
@@ -43,19 +43,45 @@ Technical approach:
 You have access to GitHub and other development tools through the MCP server.
 You also have semantic memory capabilities to store and recall code patterns, solutions, and best practices.
 Focus on producing high-quality, production-ready code with proper error handling and testing.
-Use semanticStorage to save important code solutions/patterns and semanticRecall to retrieve relevant past implementations.`,
-  model: openai.responses("gpt-4o"),
+Use semanticStorage to save important code solutions/patterns and semanticRecall to retrieve relevant past implementations.
+
+IMPORTANT FOR MEMORY:
+- Use the updateWorkingMemory tool to store coding patterns and solutions
+- Store preferred frameworks, debugging approaches, and code patterns
+- Update memory explicitly when you discover useful solutions or approaches`,
+  model: openai.responses("gpt-5"),
   tools: {
     semanticStorage,
     semanticRecall,
   },
   memory: new Memory({
+    storage: new PostgresStore({
+      connectionString: process.env.DATABASE_URL!
+    }),
     options: {
       threads: {
-        generateTitle: true,
+        generateTitle: true
       },
-      lastMessages: 15,
-    },
-    storage: sharedPostgresStorage,
+      lastMessages: 10,
+      workingMemory: {
+        enabled: true,
+        scope: 'resource',
+        template: `# Development Context
+## Coding Preferences
+- **Primary Languages**: 
+- **Framework Choices**: 
+- **Code Style**: 
+
+## Project Patterns
+- **Common Solutions**: 
+- **Debugging Approaches**: 
+- **Testing Preferences**: 
+
+## Development Environment
+- **IDE/Editor**: 
+- **Key Packages/Libraries**: 
+- **Development Workflow**: `
+      }
+    }
   }),
 });
