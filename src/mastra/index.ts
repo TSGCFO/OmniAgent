@@ -2,6 +2,7 @@ import { Mastra } from "@mastra/core";
 import { MastraError } from "@mastra/core/error";
 import { PinoLogger } from "@mastra/loggers";
 import { LogLevel, MastraLogger } from "@mastra/core/logger";
+import { Agent } from "@mastra/core/agent";
 import pino from "pino";
 import { MCPServer } from "@mastra/mcp";
 import { NonRetriableError } from "inngest";
@@ -63,6 +64,8 @@ class ProductionPinoLogger extends MastraLogger {
 }
 
 // Initialize the main agent with all tools on startup
+// We'll store the initialized agent in a variable
+let initializedAgent: Agent | null = null;
 let isAgentInitialized = false;
 let initializationPromise: Promise<void> | null = null;
 
@@ -73,23 +76,15 @@ export async function ensureAgentInitialized() {
     initializationPromise = (async () => {
       try {
         console.log("🚀 Initializing main agent with MCP tools...");
-        const agent = await initializeMainAgent();
-        
-        // Transfer all properties from the initialized agent to mainAgent
-        // This ensures tools and other properties are properly transferred
-        mainAgent.name = agent.name;
-        mainAgent.description = agent.description;
-        mainAgent.instructions = agent.instructions;
-        mainAgent.model = agent.model;
-        mainAgent.tools = agent.tools;  // Explicitly set tools
-        mainAgent.memory = agent.memory;
-        
+        initializedAgent = await initializeMainAgent();
         isAgentInitialized = true;
-        console.log(`✅ Main agent fully initialized with ${Object.keys(mainAgent.tools).length} tools`);
+        console.log(`✅ Main agent fully initialized with ${Object.keys(initializedAgent.tools).length} tools`);
       } catch (error) {
         console.error("❌ Critical: Failed to initialize main agent:", error);
         console.error("⚠️ Continuing with basic agent without MCP tools");
-        isAgentInitialized = true; // Mark as initialized even on failure to prevent infinite retry
+        // Use the basic mainAgent as fallback
+        initializedAgent = mainAgent;
+        isAgentInitialized = true;
       }
     })();
   }
@@ -99,6 +94,11 @@ export async function ensureAgentInitialized() {
 
 // Initialize on startup
 ensureAgentInitialized();
+
+// Export a function to get the initialized agent
+export function getInitializedAgent(): Agent {
+  return initializedAgent || mainAgent;
+}
 
 export const mastra = new Mastra({
   storage: sharedPostgresStorage,
