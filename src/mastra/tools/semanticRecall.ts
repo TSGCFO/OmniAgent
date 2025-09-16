@@ -52,7 +52,7 @@ export const semanticRecall = createTool({
       id: z.number(),
       content: z.string(),
       similarity: z.number(),
-      metadata: z.record(z.any()),
+      metadata: z.object({}).passthrough(),
       agentName: z.string().nullable(),
       threadId: z.string().nullable(),
       createdAt: z.string(),

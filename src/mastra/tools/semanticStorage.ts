@@ -15,7 +15,7 @@ export const semanticStorage = createTool({
   description: "Store text content with semantic embeddings for later retrieval using similarity search",
   inputSchema: z.object({
     content: z.string().describe("The text content to store and embed"),
-    metadata: z.record(z.any()).optional().default({}).describe("Additional metadata to store with the memory"),
+    metadata: z.object({}).passthrough().optional().default({}).describe("Additional metadata to store with the memory"),
     agentName: z.string().optional().describe("Name of the agent storing this memory"),
     threadId: z.string().optional().describe("Thread ID for conversation context"),
   }),
