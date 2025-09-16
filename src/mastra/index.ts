@@ -12,14 +12,14 @@ import { sharedPostgresStorage } from "./storage";
 import { inngest, inngestServe } from "./inngest";
 import { assistantWorkflow } from "./workflows/assistantWorkflow";
 import { mainAgent } from "./agents";
-import { getMCPTools } from "./mcp-client";
+import { initializeMainAgent } from "./agents/agentFactory";
+import { getClient, registerSlackTrigger } from "../triggers/slackTriggers";
 import { delegateToSubAgent } from "./tools/delegateToSubAgent";
 import { webScraper } from "./tools/webScraper";
 import { deepResearch } from "./tools/deepResearch";
 import { selfLearning } from "./tools/selfLearning";
 import { semanticStorage } from "./tools/semanticStorage";
 import { semanticRecall } from "./tools/semanticRecall";
-import { getClient, registerSlackTrigger } from "../triggers/slackTriggers";
 
 class ProductionPinoLogger extends MastraLogger {
   protected logger: pino.Logger;
@@ -62,41 +62,18 @@ class ProductionPinoLogger extends MastraLogger {
   }
 }
 
-// Initialize tools for the main agent on startup
+// Initialize the main agent with all tools on startup
 (async () => {
   try {
-    console.log("🚀 Initializing agent tools...");
-    
-    // Get MCP tools from the server
-    const mcpTools = await getMCPTools();
-    
-    // Add all tools to the main agent
-    const allTools = {
-      ...mcpTools,
-      delegateToSubAgent,
-      webScraper,
-      deepResearch,
-      selfLearning,
-      semanticStorage,
-      semanticRecall,
-    };
-    
-    // Update the agent's tools
-    Object.assign(mainAgent.tools, allTools);
-    
-    console.log(`✅ Main agent initialized with ${Object.keys(allTools).length} tools`);
+    console.log("🚀 Initializing main agent with MCP tools...");
+    const agent = await initializeMainAgent();
+    // Replace the placeholder agent with the initialized one
+    Object.setPrototypeOf(mainAgent, Object.getPrototypeOf(agent));
+    Object.assign(mainAgent, agent);
+    console.log(`✅ Main agent fully initialized with ${Object.keys(mainAgent.tools).length} tools`);
   } catch (error) {
-    console.error("❌ Failed to initialize agent tools:", error);
-    // Continue with just the custom tools
-    Object.assign(mainAgent.tools, {
-      delegateToSubAgent,
-      webScraper,
-      deepResearch,
-      selfLearning,
-      semanticStorage,
-      semanticRecall,
-    });
-    console.log("⚠️ Using fallback tools only");
+    console.error("❌ Critical: Failed to initialize main agent:", error);
+    console.error("⚠️ Continuing with basic agent without MCP tools");
   }
 })();
 
