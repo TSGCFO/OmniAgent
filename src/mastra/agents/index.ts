@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
-import { PostgresStore } from "@mastra/pg";
+import { PostgresStore, PgVector } from "@mastra/pg";
 import { createOpenAI } from "@ai-sdk/openai";
 import { semanticStorage } from "../tools/semanticStorage";
 import { semanticRecall } from "../tools/semanticRecall";
@@ -64,11 +64,19 @@ Remember to use your extensive toolkit wisely to deliver exceptional results.`,
     storage: new PostgresStore({
       connectionString: process.env.DATABASE_URL!
     }),
+    vector: new PgVector({
+      connectionString: process.env.DATABASE_URL!
+    }),
+    embedder: openai.embedding("text-embedding-3-small"),
     options: {
       threads: {
         generateTitle: true
       },
       lastMessages: 20,
+      semanticRecall: {
+        topK: 3,              // Retrieve top 3 most relevant memories
+        messageRange: 2       // Include 2 messages before/after for context
+      },
       workingMemory: {
         enabled: true,
         scope: 'resource',
