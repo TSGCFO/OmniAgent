@@ -98,7 +98,7 @@ async function testWorkingMemory() {
 async function testDirectMemoryUpdate() {
   console.log("\n=== Testing Direct Memory Update ===");
   
-  const memory = mainAgent.memory;
+  const memory = (mainAgent as any).memory;
   const resourceId = "user-main";
   const threadId = "direct-update-thread";
   
