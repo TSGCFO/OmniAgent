@@ -43,9 +43,10 @@ Focus on efficient email management and clear communication.
 Use semanticStorage to save important emails/templates and semanticRecall to retrieve relevant past communications.
 
 IMPORTANT FOR MEMORY:
-- Use the updateWorkingMemory tool to store important email patterns and contacts
-- Store email templates, frequent contacts, and communication preferences
-- Update memory explicitly when you identify important communication patterns`,
+- Working memory automatically stores important email patterns and contacts
+- Email templates, frequent contacts, and communication preferences are saved automatically
+- Memory updates happen naturally when you identify important communication patterns
+- Do NOT manually call updateWorkingMemory - focus on email management tasks`,
   model: openai.responses("gpt-5"),
   tools: {
     semanticStorage,

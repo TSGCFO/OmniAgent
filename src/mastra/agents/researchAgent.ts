@@ -40,9 +40,10 @@ Focus on providing thorough, well-researched, and accurate information.
 Use semanticStorage to save important research insights and semanticRecall to retrieve relevant past findings.
 
 IMPORTANT FOR MEMORY:
-- Use the updateWorkingMemory tool to store important research findings
-- Store key discoveries, trusted sources, and research patterns
-- Update memory explicitly when you find significant information`,
+- Working memory automatically stores important research findings
+- Key discoveries, trusted sources, and research patterns are saved automatically
+- Memory updates happen naturally when you find significant information
+- Do NOT manually call updateWorkingMemory - focus on your research tasks`,
   model: openai.responses("gpt-5"),
   tools: {
     semanticStorage,

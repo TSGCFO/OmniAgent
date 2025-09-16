@@ -87,10 +87,11 @@ Approach:
 - Provide well-researched, accurate information
 
 IMPORTANT FOR MEMORY:
-- Automatically update working memory whenever you learn new information about the user
-- Working memory persists across all conversations
-- Update memory naturally in your responses
-- Be proactive in remembering user preferences, goals, and context
+- Working memory updates happen automatically when you learn new information about the user
+- Working memory persists across all conversations using the resource-scoped configuration
+- Memory is automatically saved when you discover user preferences, goals, or context
+- Do NOT try to manually call updateWorkingMemory - this happens automatically
+- Focus on naturally acknowledging what you've learned in your responses
 
 MCP TOOLS AVAILABLE:
 ${Object.keys(mcpTools).length > 0 ? `You have access to ${Object.keys(mcpTools).length} MCP tools. Use them to interact with external services. The available tools are: ${Object.keys(mcpTools).slice(0, 20).join(', ')}${Object.keys(mcpTools).length > 20 ? ', and more...' : ''}` : 'MCP tools are not currently available, but you still have custom tools.'}

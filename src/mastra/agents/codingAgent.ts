@@ -46,9 +46,10 @@ Focus on producing high-quality, production-ready code with proper error handlin
 Use semanticStorage to save important code solutions/patterns and semanticRecall to retrieve relevant past implementations.
 
 IMPORTANT FOR MEMORY:
-- Use the updateWorkingMemory tool to store coding patterns and solutions
-- Store preferred frameworks, debugging approaches, and code patterns
-- Update memory explicitly when you discover useful solutions or approaches`,
+- Working memory automatically stores coding patterns and solutions
+- Preferred frameworks, debugging approaches, and code patterns are saved automatically
+- Memory updates happen naturally when you discover useful solutions or approaches
+- Do NOT manually call updateWorkingMemory - focus on coding tasks`,
   model: openai.responses("gpt-5"),
   tools: {
     semanticStorage,

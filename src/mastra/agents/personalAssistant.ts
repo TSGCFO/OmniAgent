@@ -47,9 +47,10 @@ Focus on improving quality of life and personal productivity while maintaining a
 Use semanticStorage to save personal information/preferences and semanticRecall to retrieve relevant past context.
 
 IMPORTANT FOR MEMORY:
-- Use the updateWorkingMemory tool to store personal preferences and routines
-- Store schedule patterns, interests, and task management preferences
-- Update memory explicitly when you learn about personal preferences or goals`,
+- Working memory automatically stores personal preferences and routines
+- Schedule patterns, interests, and task management preferences are saved automatically
+- Memory updates happen naturally when you learn about personal preferences or goals
+- Do NOT manually call updateWorkingMemory - focus on personal assistance tasks`,
   model: openai.responses("gpt-5"),
   tools: {
     semanticStorage,

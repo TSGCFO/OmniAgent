@@ -28,7 +28,7 @@ const processWithAgent = createStep({
     const { text } = await mainAgent.generate([
       { role: "user", content: inputData.message }
     ], {
-      resourceId: "slack-bot",
+      resourceId: "user-main",  // Single user system - shared memory across all conversations
       threadId: inputData.threadId,
       maxSteps: 10,
       onStepFinish: ({ toolCalls }) => {
