@@ -97,7 +97,7 @@ ${Object.keys(mcpTools).length > 0 ? `You have access to ${Object.keys(mcpTools)
 
 Always strive to provide the most comprehensive and helpful assistance possible.
 Remember to use your extensive toolkit wisely to deliver exceptional results.`,
-    model: openai.responses("gpt-5"),
+    model: openai.responses("gpt-4o"),
     tools: allTools,  // All tools including MCP tools are properly registered here
     memory: new Memory({
       storage: new PostgresStore({

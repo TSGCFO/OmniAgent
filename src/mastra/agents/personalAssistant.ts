@@ -50,7 +50,7 @@ IMPORTANT FOR MEMORY:
 - Use the updateWorkingMemory tool to store personal preferences and routines
 - Store schedule patterns, interests, and task management preferences
 - Update memory explicitly when you learn about personal preferences or goals`,
-  model: openai.responses("gpt-5"),
+  model: openai.responses("gpt-4o"),
   tools: {
     semanticStorage,
     semanticRecall,

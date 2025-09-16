@@ -1,6 +1,5 @@
 import { createWorkflow, createStep } from "../inngest";
 import { z } from "zod";
-import { mainAgent } from "../agents";
 import { getClient } from "../../triggers/slackTriggers";
 import { format } from "node:util";
 
@@ -23,6 +22,12 @@ const processWithAgent = createStep({
     logger?.info("🤖 [Workflow Step 1] Calling agent.generate()", {
       threadId: inputData.threadId,
     });
+    
+    // Get the main agent from the Mastra instance
+    const mainAgent = mastra?.getAgent("mainAgent");
+    if (!mainAgent) {
+      throw new Error("Main agent not found. System may not be fully initialized.");
+    }
     
     // ONLY call agent.generate() - no other logic
     const { text } = await mainAgent.generate([
