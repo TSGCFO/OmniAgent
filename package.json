@@ -8,7 +8,12 @@
     "build": "mastra build",
     "check": "tsc",
     "check:format": "prettier --check '**/*.ts'",
-    "format": "prettier --write '**/*.ts'"
+    "format": "prettier --write '**/*.ts'",
+    "test:network": "tsx src/test-network.ts",
+    "test:client": "tsx src/client-example.ts",
+    "test:refactored": "tsx src/test-refactored-system.ts",
+    "test:final": "tsx src/test-final-refactored.ts",
+    "cleanup:verify": "tsx src/cleanup-old-patterns.ts"
   },
   "keywords": [],
   "type": "module",

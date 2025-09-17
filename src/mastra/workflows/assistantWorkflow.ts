@@ -1,13 +1,12 @@
 import { createWorkflow, createStep } from "../inngest";
 import { z } from "zod";
-import { orchestratorAgent } from "../agents/orchestratorAgent";
 import { getClient } from "../../triggers/slackTriggers";
 import { format } from "node:util";
 
-// Step 1: Process message with the orchestrator agent
+// Step 1: Process message with the agent (ONLY call agent.generate())
 const processWithAgent = createStep({
   id: "process-with-agent",
-  description: "Call the orchestrator agent to process the request",
+  description: "Call the agent to generate a response",
   inputSchema: z.object({
     message: z.string(),
     threadId: z.string(),
@@ -20,33 +19,31 @@ const processWithAgent = createStep({
   }),
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
-    logger?.info("🤖 [Workflow Step 1] Calling orchestrator agent", {
+    logger?.info("🤖 [Workflow Step 1] Calling OmniAgent Network", {
       threadId: inputData.threadId,
     });
     
-    // Use the orchestrator to process the message
-    const { text } = await orchestratorAgent.generate(
-      [{ role: "user", content: inputData.message }],
-      {
-        resourceId: "slack-bot",
-        threadId: inputData.threadId,
-        maxSteps: 10,
-        onStepFinish: ({ toolCalls }) => {
-          if (toolCalls && toolCalls.length > 0) {
-            logger?.info("🔄 [Orchestrator] Using tools", {
-              tools: toolCalls.map(t => t.toolName),
-            });
-          }
-        },
-      }
-    );
+    // Get the OmniAgent Network
+    const network = mastra?.getNetwork('omni-network');
+    if (!network) {
+      throw new Error('OmniAgent Network not found');
+    }
     
-    logger?.info("✅ [Workflow Step 1] Orchestrator response generated", {
-      responseLength: text.length,
+    // Use the network to generate a response
+    const result = await network.generate(inputData.message, {
+      memory: {
+        resource: "slack-bot",
+        thread: inputData.threadId,
+      },
+      maxSteps: 10,
+    });
+    
+    logger?.info("✅ [Workflow Step 1] Network response generated", {
+      responseLength: result.text.length,
     });
     
     return {
-      response: text,
+      response: result.text,
       threadId: inputData.threadId,
       channel: inputData.channel,
     };

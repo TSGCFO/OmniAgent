@@ -1,4 +1,3 @@
-import "dotenv/config"; // Load environment variables first
 import { Mastra } from "@mastra/core";
 import { MastraError } from "@mastra/core/error";
 import { PinoLogger } from "@mastra/loggers";
@@ -12,18 +11,7 @@ import { format } from "node:util";
 import { sharedPostgresStorage } from "./storage";
 import { inngest, inngestServe } from "./inngest";
 import { assistantWorkflow } from "./workflows/assistantWorkflow";
-import { orchestratorAgent } from "./agents/orchestratorAgent";
-import { researchAgent } from "./agents/researchAgent";
-import { emailAgent } from "./agents/emailAgent";
-import { codingAgent } from "./agents/codingAgent";
-import { personalAssistant } from "./agents/personalAssistant";
-import { getMCPTools } from "./mcp-client";
-import { delegateToSubAgent } from "./tools/delegateToSubAgent";
-import { webScraper } from "./tools/webScraper";
-import { deepResearch } from "./tools/deepResearch";
-import { selfLearning } from "./tools/selfLearning";
-import { semanticStorage } from "./tools/semanticStorage";
-import { semanticRecall } from "./tools/semanticRecall";
+import { omniNetworkSimplified } from "./network/omni-network-simplified";
 import { getClient, registerSlackTrigger } from "../triggers/slackTriggers";
 
 class ProductionPinoLogger extends MastraLogger {
@@ -67,86 +55,24 @@ class ProductionPinoLogger extends MastraLogger {
   }
 }
 
-// Initialize tools for all agents on startup
+// Initialize the OmniAgent Network on startup
 (async () => {
   try {
-    console.log("🚀 Initializing multi-agent system...");
+    console.log("🚀 Initializing OmniAgent Network...");
     
-    // Get MCP tools from the server
-    const mcpTools = await getMCPTools();
-    
-    // Create core tools collection
-    const coreTools = {
-      webScraper,
-      deepResearch,
-      selfLearning,
-      semanticStorage,
-      semanticRecall,
-    };
-    
-    // Combine all tools
-    const allTools = {
-      ...mcpTools,
-      ...coreTools,
-    };
-    
-    // Add delegation tool to orchestrator
-    Object.assign(orchestratorAgent.tools, {
-      delegateToSubAgent,
-    });
-    
-    // Add tools to specialized agents
-    Object.assign(researchAgent.tools, allTools);
-    Object.assign(emailAgent.tools, allTools);
-    Object.assign(codingAgent.tools, allTools);
-    Object.assign(personalAssistant.tools, allTools);
-    
-    console.log(`✅ Multi-agent system initialized with ${Object.keys(allTools).length} tools`);
+    // The network will handle tool loading internally
+    console.log("✅ OmniAgent Network initialized and ready");
   } catch (error) {
-    console.error("❌ Failed to initialize agents:", error);
-    // Continue with just the custom tools
-    const coreTools = {
-      webScraper,
-      deepResearch,
-      selfLearning,
-      semanticStorage,
-      semanticRecall,
-    };
-    
-    Object.assign(orchestratorAgent.tools, { delegateToSubAgent });
-    Object.assign(researchAgent.tools, coreTools);
-    Object.assign(emailAgent.tools, coreTools);
-    Object.assign(codingAgent.tools, coreTools);
-    Object.assign(personalAssistant.tools, coreTools);
-    
-    console.log("⚠️ Using fallback tools only");
+    console.error("❌ Failed to initialize OmniAgent Network:", error);
   }
 })();
 
 export const mastra = new Mastra({
   storage: sharedPostgresStorage,
-  agents: {
-    orchestratorAgent,
-    researchAgent,
-    emailAgent,
-    codingAgent,
-    personalAssistant,
+  vnext_networks: {
+    'omni-network': omniNetworkSimplified,
   },
   workflows: { assistantWorkflow },
-  mcpServers: {
-    allTools: new MCPServer({
-      name: "allTools",
-      version: "1.0.0",
-      tools: {
-        delegateToSubAgent,
-        webScraper,
-        deepResearch,
-        selfLearning,
-        semanticStorage,
-        semanticRecall,
-      },
-    }),
-  },
   bundler: {
     // A few dependencies are not properly picked up by
     // the bundler if they are not added directly to the
@@ -157,7 +83,6 @@ export const mastra = new Mastra({
       "inngest/hono",
       "hono",
       "hono/streaming",
-      "@mastra/mcp",
     ],
     // sourcemaps are good for debugging.
     sourcemap: true,
@@ -276,20 +201,16 @@ export const mastra = new Mastra({
 
 /*  Sanity check 1: Throw an error if there are more than 1 workflows.  */
 // !!!!!! Do not remove this check. !!!!!!
-// Note: Networks may contain their own workflows, but we only check top-level ones
 if (Object.keys(mastra.getWorkflows()).length > 1) {
   throw new Error(
     "More than 1 workflows found. Currently, more than 1 workflows are not supported in the UI, since doing so will cause app state to be inconsistent.",
   );
 }
 
-/*  Sanity check 2: We have multiple agents but UI may only show one  */
+/*  Sanity check 2: Throw an error if there are more than 1 vNext networks.  */
 // !!!!!! Do not remove this check. !!!!!!
-// Note: We have 5 agents (orchestrator + 4 specialized) for multi-agent functionality
-// The UI may only display the orchestrator agent
-const agentCount = Object.keys(mastra.getAgents()).length;
-if (agentCount !== 5) {
-  console.warn(
-    `Expected 5 agents but found ${agentCount}. The UI may only show the orchestrator agent.`,
+if (Object.keys(mastra.getNetworks()).length > 1) {
+  throw new Error(
+    "More than 1 vNext networks found. Currently, more than 1 vNext networks are not supported in the UI, since doing so will cause app state to be inconsistent.",
   );
 }
