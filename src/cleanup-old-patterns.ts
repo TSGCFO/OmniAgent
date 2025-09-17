@@ -12,8 +12,7 @@ async function cleanupOldPatterns() {
     }
 
     console.log("✅ New network is working:", network.name);
-    console.log("📋 Available agents:", Object.keys(network.agents || {}));
-    console.log("🔄 Available workflows:", Object.keys(network.workflows || {}));
+    // Note: agents and workflows are not directly accessible as properties on NewAgentNetwork
     console.log();
 
     // Test basic functionality

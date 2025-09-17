@@ -25,7 +25,7 @@ export const researchWorkflow = createWorkflow({
     description: 'Conducts comprehensive research on the given topic',
     inputSchema: z.object({
       topic: z.string(),
-      depth: z.enum(['basic', 'comprehensive', 'exhaustive']),
+      depth: z.enum(['basic', 'comprehensive', 'exhaustive']).default('comprehensive'),
       focus: z.string().optional(),
     }),
     outputSchema: z.object({
@@ -81,7 +81,7 @@ export const emailWorkflow = createWorkflow({
       emailContent: z.string(),
       sender: z.string().optional(),
       context: z.string().optional(),
-      action: z.enum(['analyze', 'respond', 'organize']),
+      action: z.enum(['analyze', 'respond', 'organize']).default('analyze'),
     }),
     outputSchema: z.object({
       analysis: z.string(),
@@ -135,7 +135,7 @@ export const codingWorkflow = createWorkflow({
       code: z.string(),
       language: z.string(),
       context: z.string().optional(),
-      action: z.enum(['analyze', 'review', 'optimize', 'debug']),
+      action: z.enum(['analyze', 'review', 'optimize', 'debug']).default('analyze'),
     }),
     outputSchema: z.object({
       analysis: z.string(),

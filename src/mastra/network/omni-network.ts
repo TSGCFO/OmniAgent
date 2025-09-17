@@ -201,6 +201,7 @@ const emailAnalysisStep = createStep({
   inputSchema: z.object({
     emailContent: z.string(),
     context: z.string().optional(),
+    action: z.enum(['analyze', 'respond', 'organize']).default('analyze'),
   }),
   outputSchema: z.object({
     analysis: z.object({
@@ -259,6 +260,7 @@ const codeAnalysisStep = createStep({
     code: z.string(),
     language: z.string(),
     context: z.string().optional(),
+    task: z.enum(['analyze', 'review', 'optimize', 'debug']).default('analyze'),
   }),
   outputSchema: z.object({
     analysis: z.object({

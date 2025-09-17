@@ -151,7 +151,7 @@ const result = await network.generate(
 
 ## 📁 File Structure
 
-```
+```text
 src/mastra/
 ├── network/
 │   ├── omni-network-simplified.ts    # Main network coordinator

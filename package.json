@@ -26,6 +26,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^1.3.22",
     "@inngest/realtime": "^0.3.1",
+    "@mastra/client-js": "^0.13.0",
     "@mastra/core": "^0.15.3",
     "@mastra/inngest": "^0.12.3",
     "@mastra/libsql": "^0.13.8",

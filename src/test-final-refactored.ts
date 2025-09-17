@@ -12,8 +12,7 @@ async function testFinalRefactoredSystem() {
     }
 
     console.log("✅ Network found:", network.name);
-    console.log("📋 Available agents:", Object.keys(network.agents || {}));
-    console.log("🔄 Available workflows:", Object.keys(network.workflows || {}));
+    // Note: agents and workflows are not directly accessible as properties on NewAgentNetwork
     console.log();
 
     // Test 1: Basic functionality
