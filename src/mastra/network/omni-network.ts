@@ -1,6 +1,6 @@
 import { NewAgentNetwork } from '@mastra/core/network/vNext';
 import { createWorkflow, createStep } from '@mastra/core/workflows';
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { Memory } from '@mastra/memory';
 import { PostgresStore, PgVector } from '@mastra/pg';
@@ -15,7 +15,7 @@ import { webScraper } from '../tools/webScraper';
 import { deepResearch } from '../tools/deepResearch';
 import { selfLearning } from '../tools/selfLearning';
 
-const openaiClient = openai({
+const openaiClient = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || undefined,
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -111,6 +111,7 @@ const factCheckStep = createStep({
   inputSchema: z.object({
     findings: z.string(),
     sources: z.array(z.string()),
+    confidence: z.number().min(0).max(1),
   }),
   outputSchema: z.object({
     verifiedFindings: z.string(),

@@ -128,16 +128,19 @@ The network automatically loads and manages:
 ## Workflow Examples
 
 ### Deep Research Workflow
+
 1. Research step: Gather information on topic
 2. Fact-check step: Verify findings
 3. Synthesis step: Create comprehensive report
 
 ### Email Management Workflow
+
 1. Analysis step: Analyze email content and priority
 2. Response generation: Create appropriate response
 3. Organization: Categorize and file email
 
 ### Coding Assistance Workflow
+
 1. Code analysis: Review code quality and issues
 2. Improvement suggestions: Provide optimization recommendations
 3. Explanation: Explain changes and best practices

@@ -27,6 +27,11 @@ const researchAnalysisStep = createStep({
     topic: z.string(),
     depth: z.enum(['basic', 'comprehensive', 'exhaustive']).default('comprehensive'),
     focus: z.string().optional(),
+    requirements: z.object({
+      format: z.string().default('comprehensive report'),
+      audience: z.string().default('general'),
+      length: z.string().default('detailed'),
+    }).optional(),
   }),
   outputSchema: z.object({
     researchPlan: z.object({
@@ -36,6 +41,12 @@ const researchAnalysisStep = createStep({
       deliverables: z.array(z.string()),
     }),
     agentRecommendations: z.array(z.string()),
+    topic: z.string(),
+    requirements: z.object({
+      format: z.string(),
+      audience: z.string(),
+      length: z.string(),
+    }).optional(),
   }),
   execute: async ({ inputData }) => {
     const result = await researchAgent.generate(
@@ -59,7 +70,11 @@ const researchAnalysisStep = createStep({
       }
     );
     
-    return result.object;
+    return { 
+      ...result.object, 
+      topic: inputData.topic,
+      requirements: inputData.requirements 
+    };
   },
 });
 
@@ -67,9 +82,19 @@ const factCheckStep = createStep({
   id: 'fact-check',
   description: 'Verifies and fact-checks research findings',
   inputSchema: z.object({
-    findings: z.string(),
-    sources: z.array(z.string()),
-    claims: z.array(z.string()),
+    researchPlan: z.object({
+      approach: z.string(),
+      sources: z.array(z.string()),
+      timeline: z.string(),
+      deliverables: z.array(z.string()),
+    }),
+    agentRecommendations: z.array(z.string()),
+    topic: z.string(),
+    requirements: z.object({
+      format: z.string(),
+      audience: z.string(),
+      length: z.string(),
+    }).optional(),
   }),
   outputSchema: z.object({
     verifiedFindings: z.string(),
@@ -80,15 +105,22 @@ const factCheckStep = createStep({
       sources: z.array(z.string()),
     })),
     reliabilityScore: z.number(),
+    topic: z.string(),
+    requirements: z.object({
+      format: z.string(),
+      audience: z.string(),
+      length: z.string(),
+    }).optional(),
   }),
   execute: async ({ inputData }) => {
     const result = await researchAgent.generate(
-      `Fact-check these research findings: ${inputData.findings}
+      `Based on the research plan for topic: ${inputData.topic}
       
-      Sources: ${inputData.sources.join(', ')}
-      Claims to verify: ${inputData.claims.join(', ')}
+      Research approach: ${inputData.researchPlan.approach}
+      Planned sources: ${inputData.researchPlan.sources.join(', ')}
       
-      Provide detailed fact-checking results with confidence scores.`,
+      Please conduct the research according to this plan and provide fact-checked findings with confidence scores.
+      Focus on verifying claims and ensuring accuracy of information.`,
       {
         output: z.object({
           verifiedFindings: z.string(),
@@ -104,7 +136,11 @@ const factCheckStep = createStep({
       }
     );
     
-    return result.object;
+    return { 
+      ...result.object, 
+      topic: inputData.topic,
+      requirements: inputData.requirements 
+    };
   },
 });
 
@@ -119,11 +155,13 @@ const synthesisStep = createStep({
       confidence: z.number(),
       sources: z.array(z.string()),
     })),
+    reliabilityScore: z.number(),
+    topic: z.string(),
     requirements: z.object({
       format: z.string(),
       audience: z.string(),
       length: z.string(),
-    }),
+    }).optional(),
   }),
   outputSchema: z.object({
     report: z.string(),
@@ -136,9 +174,10 @@ const synthesisStep = createStep({
     const result = await researchAgent.generate(
       `Synthesize these verified findings into a comprehensive report: ${inputData.verifiedFindings}
       
-      Format: ${inputData.requirements.format}
-      Audience: ${inputData.requirements.audience}
-      Length: ${inputData.requirements.length}
+      Topic: ${inputData.topic}
+      Format: ${inputData.requirements?.format || 'comprehensive report'}
+      Audience: ${inputData.requirements?.audience || 'general'}
+      Length: ${inputData.requirements?.length || 'detailed'}
       
       Create a well-structured report with summary, insights, and recommendations.`,
       {
@@ -166,6 +205,7 @@ const emailAnalysisStep = createStep({
     sender: z.string().optional(),
     context: z.string().optional(),
     urgency: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+    action: z.enum(['analyze', 'respond', 'organize', 'schedule']).default('analyze'),
   }),
   outputSchema: z.object({
     analysis: z.object({
@@ -227,6 +267,7 @@ const codeAnalysisStep = createStep({
       focus: z.array(z.string()).optional(),
       standards: z.array(z.string()).optional(),
     }).optional(),
+    action: z.enum(['analyze', 'review', 'optimize', 'debug', 'refactor']).default('analyze'),
   }),
   outputSchema: z.object({
     analysis: z.object({
