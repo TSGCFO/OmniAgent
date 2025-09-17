@@ -1,13 +1,13 @@
 import { createWorkflow, createStep } from "../inngest";
 import { z } from "zod";
-import { mainAgent } from "../agents";
+import { orchestratorAgent } from "../agents/orchestratorAgent";
 import { getClient } from "../../triggers/slackTriggers";
 import { format } from "node:util";
 
-// Step 1: Process message with the agent (ONLY call agent.generate())
+// Step 1: Process message with the orchestrator agent
 const processWithAgent = createStep({
   id: "process-with-agent",
-  description: "Call the agent to generate a response",
+  description: "Call the orchestrator agent to process the request",
   inputSchema: z.object({
     message: z.string(),
     threadId: z.string(),
@@ -20,27 +20,28 @@ const processWithAgent = createStep({
   }),
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
-    logger?.info("🤖 [Workflow Step 1] Calling agent.generate()", {
+    logger?.info("🤖 [Workflow Step 1] Calling orchestrator agent", {
       threadId: inputData.threadId,
     });
     
-    // ONLY call agent.generate() - no other logic
-    const { text } = await mainAgent.generate([
-      { role: "user", content: inputData.message }
-    ], {
-      resourceId: "slack-bot",
-      threadId: inputData.threadId,
-      maxSteps: 10,
-      onStepFinish: ({ toolCalls }) => {
-        if (toolCalls && toolCalls.length > 0) {
-          logger?.info("🔄 [Agent] Using tools", {
-            tools: toolCalls.map(t => t.toolName),
-          });
-        }
-      },
-    });
+    // Use the orchestrator to process the message
+    const { text } = await orchestratorAgent.generate(
+      [{ role: "user", content: inputData.message }],
+      {
+        resourceId: "slack-bot",
+        threadId: inputData.threadId,
+        maxSteps: 10,
+        onStepFinish: ({ toolCalls }) => {
+          if (toolCalls && toolCalls.length > 0) {
+            logger?.info("🔄 [Orchestrator] Using tools", {
+              tools: toolCalls.map(t => t.toolName),
+            });
+          }
+        },
+      }
+    );
     
-    logger?.info("✅ [Workflow Step 1] Agent response generated", {
+    logger?.info("✅ [Workflow Step 1] Orchestrator response generated", {
       responseLength: text.length,
     });
     
