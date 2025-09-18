@@ -59,17 +59,27 @@ class ProductionPinoLogger extends MastraLogger {
 // Initialize OmniAgent on startup
 console.log("🚀 OmniAgent system initialized and ready");
 
+// For development, only register one workflow due to UI limitations
+const isDevelopment = process.env.NODE_ENV !== "production";
+if (isDevelopment) {
+  console.log("⚠️  Development mode: Only registering assistantWorkflow for UI compatibility");
+} else {
+  console.log("✅ Production mode: All workflows registered");
+}
+
 export const mastra = new Mastra({
   storage: sharedPostgresStorage,
   agents: {
     omniAgent,
   },
-  workflows: {
-    assistantWorkflow,
-    researchWorkflow,
-    emailWorkflow,
-    codingWorkflow,
-  },
+  workflows: isDevelopment 
+    ? { assistantWorkflow } // Only one workflow for dev UI
+    : {
+        assistantWorkflow,
+        researchWorkflow,
+        emailWorkflow,
+        codingWorkflow,
+      },
   bundler: {
     // A few dependencies are not properly picked up by
     // the bundler if they are not added directly to the

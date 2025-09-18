@@ -8,6 +8,7 @@ import { codingAgent } from "./refactored/codingAgent";
 import { personalAssistant } from "./refactored/personalAssistant";
 import { researchWorkflow, emailWorkflow, codingWorkflow } from "../network/simplified-workflows";
 import { Mastra } from "@mastra/core";
+import { z } from "zod";
 
 // Create the main OmniAgent that coordinates all other agents
 export const omniAgent = new Agent({
@@ -60,13 +61,9 @@ Remember: You are the intelligent coordinator. Use your tools wisely to provide 
         research_agent: {
           id: "research_agent",
           description: "Use the research specialist for deep information gathering and analysis",
-          inputSchema: {
-            type: "object",
-            properties: {
-              query: { type: "string", description: "The research query or topic" }
-            },
-            required: ["query"]
-          },
+          inputSchema: z.object({
+            query: z.string().describe("The research query or topic")
+          }),
           execute: async ({ context }: { context: { query: string } }) => {
             const result = await researchAgent.generate(context.query, {
               memory: {
@@ -80,13 +77,9 @@ Remember: You are the intelligent coordinator. Use your tools wisely to provide 
         email_agent: {
           id: "email_agent",
           description: "Use the email manager for professional communication tasks",
-          inputSchema: {
-            type: "object",
-            properties: {
-              task: { type: "string", description: "The email-related task" }
-            },
-            required: ["task"]
-          },
+          inputSchema: z.object({
+            task: z.string().describe("The email-related task")
+          }),
           execute: async ({ context }: { context: { task: string } }) => {
             const result = await emailAgent.generate(context.task, {
               memory: {
@@ -100,13 +93,9 @@ Remember: You are the intelligent coordinator. Use your tools wisely to provide 
         coding_agent: {
           id: "coding_agent",
           description: "Use the coding assistant for software development tasks",
-          inputSchema: {
-            type: "object",
-            properties: {
-              task: { type: "string", description: "The coding task or question" }
-            },
-            required: ["task"]
-          },
+          inputSchema: z.object({
+            task: z.string().describe("The coding task or question")
+          }),
           execute: async ({ context }: { context: { task: string } }) => {
             const result = await codingAgent.generate(context.task, {
               memory: {
@@ -120,13 +109,9 @@ Remember: You are the intelligent coordinator. Use your tools wisely to provide 
         personal_assistant_agent: {
           id: "personal_assistant_agent",
           description: "Use the personal assistant for life management and productivity",
-          inputSchema: {
-            type: "object",
-            properties: {
-              task: { type: "string", description: "The personal assistance task" }
-            },
-            required: ["task"]
-          },
+          inputSchema: z.object({
+            task: z.string().describe("The personal assistance task")
+          }),
           execute: async ({ context }: { context: { task: string } }) => {
             const result = await personalAssistant.generate(context.task, {
               memory: {
@@ -141,15 +126,11 @@ Remember: You are the intelligent coordinator. Use your tools wisely to provide 
         research_workflow: {
           id: "research_workflow",
           description: "Execute comprehensive research workflow with analysis and synthesis",
-          inputSchema: {
-            type: "object",
-            properties: {
-              topic: { type: "string", description: "Research topic" },
-              depth: { type: "string", enum: ["basic", "comprehensive", "exhaustive"], default: "comprehensive" },
-              focus: { type: "string", description: "Specific focus area (optional)" }
-            },
-            required: ["topic"]
-          },
+          inputSchema: z.object({
+            topic: z.string().describe("Research topic"),
+            depth: z.enum(["basic", "comprehensive", "exhaustive"]).default("comprehensive").describe("Research depth"),
+            focus: z.string().optional().describe("Specific focus area (optional)")
+          }),
           execute: async ({ context, mastra }: { context: { topic: string; depth?: string; focus?: string }; mastra?: Mastra }) => {
             const workflow = mastra?.getWorkflow("researchWorkflow");
             if (!workflow) throw new Error("Research workflow not found");
@@ -169,16 +150,12 @@ Remember: You are the intelligent coordinator. Use your tools wisely to provide 
         email_workflow: {
           id: "email_workflow",
           description: "Execute email workflow for analysis and response generation",
-          inputSchema: {
-            type: "object",
-            properties: {
-              emailContent: { type: "string", description: "Email content to analyze" },
-              sender: { type: "string", description: "Email sender (optional)" },
-              context: { type: "string", description: "Additional context (optional)" },
-              action: { type: "string", enum: ["analyze", "respond", "organize"], default: "analyze" }
-            },
-            required: ["emailContent"]
-          },
+          inputSchema: z.object({
+            emailContent: z.string().describe("Email content to analyze"),
+            sender: z.string().optional().describe("Email sender (optional)"),
+            context: z.string().optional().describe("Additional context (optional)"),
+            action: z.enum(["analyze", "respond", "organize"]).default("analyze").describe("Action to perform")
+          }),
           execute: async ({ context, mastra }: { context: { emailContent: string; sender?: string; context?: string; action?: string }; mastra?: Mastra }) => {
             const workflow = mastra?.getWorkflow("emailWorkflow");
             if (!workflow) throw new Error("Email workflow not found");
@@ -199,16 +176,12 @@ Remember: You are the intelligent coordinator. Use your tools wisely to provide 
         coding_workflow: {
           id: "coding_workflow",
           description: "Execute coding workflow for analysis and improvements",
-          inputSchema: {
-            type: "object",
-            properties: {
-              code: { type: "string", description: "Code to analyze" },
-              language: { type: "string", description: "Programming language" },
-              context: { type: "string", description: "Additional context (optional)" },
-              action: { type: "string", enum: ["analyze", "review", "optimize", "debug"], default: "analyze" }
-            },
-            required: ["code", "language"]
-          },
+          inputSchema: z.object({
+            code: z.string().describe("Code to analyze"),
+            language: z.string().describe("Programming language"),
+            context: z.string().optional().describe("Additional context (optional)"),
+            action: z.enum(["analyze", "review", "optimize", "debug"]).default("analyze").describe("Action to perform")
+          }),
           execute: async ({ context, mastra }: { context: { code: string; language: string; context?: string; action?: string }; mastra?: Mastra }) => {
             const workflow = mastra?.getWorkflow("codingWorkflow");
             if (!workflow) throw new Error("Coding workflow not found");
