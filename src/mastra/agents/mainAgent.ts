@@ -7,6 +7,8 @@ import { delegateToSubAgent } from "../tools/delegateToSubAgent";
 import { webScraper } from "../tools/webScraper";
 import { deepResearch } from "../tools/deepResearch";
 import { selfLearning } from "../tools/selfLearning";
+import { semanticStorage } from "../tools/semanticStorage";
+import { semanticRecall } from "../tools/semanticRecall";
 
 const openai = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || undefined,
@@ -29,6 +31,8 @@ export async function createMainAgent() {
       webScraper,
       deepResearch,
       selfLearning,
+      semanticStorage,
+      semanticRecall,
     };
     
     if (Object.keys(allTools).length > 0) {
@@ -74,11 +78,20 @@ Your role is to provide intelligent, thorough assistance for any task. You have:
    - webScraper: Direct web page scraping
    - deepResearch: Conduct in-depth research
    - selfLearning: Track and learn from user preferences
+   - semanticStorage: Store important information with semantic embeddings for intelligent retrieval
+   - semanticRecall: Search and retrieve semantically similar memories from past conversations
 
 4. **Advanced Features**:
    - Memory of conversations and preferences
-   - Semantic storage and recall
+   - Semantic storage and recall for intelligent information retrieval
    - Multi-step task execution
+   - Vector-based similarity search for contextual memory
+
+5. **Semantic Memory Usage**:
+   - Use 'semanticStorage' to save important information, facts, or context you learn
+   - Use 'semanticRecall' to search for relevant past information when answering questions
+   - Automatically store key insights, user preferences, and important data
+   - Search memories before answering to provide contextual responses
 
 IMPORTANT WORKFLOW for external integrations:
 1. When user asks for external service integration (e.g., "send an email", "check GitHub"), ALWAYS start with rubeApp_RUBE_SEARCH_TOOLS
