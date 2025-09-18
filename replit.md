@@ -4,6 +4,43 @@ This is a Mastra-based AI agent stack that provides a comprehensive AI assistant
 
 # User Preferences
 
+## CRITICAL: Always Use [docs-mastra.md] First
+
+Before performing ANY planning or implementation steps related to Mastra:
+
+1. **Search Mastra Documentation**
+   - Use the [docs-mastra.md] to explore relevant documentation
+   - Check both general docs and reference docs for the feature you're working on
+   - Example: For agents, check both `agents/` and `reference/agents/`
+
+2. **Review Mastra Examples**
+   - Use [docs-mastra.md] to find relevant code examples
+   - Study the example implementations before writing any code
+   - Look for patterns and best practices in the examples
+
+## Implementation Process
+
+1. **Research Phase** (ALWAYS FIRST)
+   - Search docs for the feature/concept
+   - Find and review relevant examples
+   - Understand the proper patterns and APIs
+
+2. **Planning Phase**
+   - Based on docs and examples, plan the implementation
+   - Reference specific documentation paths and example names
+
+3. **Implementation Phase**
+   - Follow patterns from official examples
+   - Use proper package imports (e.g., `@mastra/core`, `@mastra/agents`)
+   - Install packages with `pnpm add <package>@latest`
+
+## Key Rules
+
+- NEVER implement Mastra features without first consulting documentation
+- ALWAYS check examples for the correct implementation patterns
+- When displaying results, mention which documentation path or example was referenced
+- Provide code snippets from examples to illustrate proper usage
+- Be concise - provide essential information first, users will ask for more if needed
 Preferred communication style: Simple, everyday language.
 
 # System Architecture
