@@ -19,18 +19,18 @@ const processWithAgent = createStep({
   }),
   execute: async ({ inputData, mastra }) => {
     const logger = mastra?.getLogger();
-    logger?.info("🤖 [Workflow Step 1] Calling OmniAgent Network", {
+    logger?.info("🤖 [Workflow Step 1] Calling OmniAgent", {
       threadId: inputData.threadId,
     });
     
-    // Get the OmniAgent Network
-    const network = mastra?.getNetwork('omni-network');
-    if (!network) {
-      throw new Error('OmniAgent Network not found');
+    // Get the OmniAgent coordinator
+    const omniAgent = mastra?.getAgent('omniAgent');
+    if (!omniAgent) {
+      throw new Error('OmniAgent not found');
     }
     
-    // Use the network to generate a response
-    const result = await network.generate(inputData.message, {
+    // Use the omniAgent to generate a response
+    const result = await omniAgent.generate(inputData.message, {
       memory: {
         resource: "slack-bot",
         thread: inputData.threadId,
@@ -38,7 +38,7 @@ const processWithAgent = createStep({
       maxSteps: 10,
     });
     
-    logger?.info("✅ [Workflow Step 1] Network response generated", {
+    logger?.info("✅ [Workflow Step 1] OmniAgent response generated", {
       responseLength: result.text.length,
     });
     

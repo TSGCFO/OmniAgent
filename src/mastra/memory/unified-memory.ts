@@ -1,6 +1,7 @@
 import { Memory } from '@mastra/memory';
 import { PostgresStore, PgVector } from '@mastra/pg';
 import { createOpenAI } from '@ai-sdk/openai';
+import { TokenLimiter, ToolCallFilter } from '@mastra/memory/processors';
 
 const openai = createOpenAI({
   baseURL: process.env.OPENAI_BASE_URL || undefined,
@@ -8,6 +9,7 @@ const openai = createOpenAI({
 });
 
 // Unified memory configuration for the entire OmniAgent system
+// Based on official Mastra examples: memory-with-pg and memory-with-processors
 export const unifiedMemory = new Memory({
   storage: new PostgresStore({
     connectionString: process.env.DATABASE_URL!
@@ -16,79 +18,70 @@ export const unifiedMemory = new Memory({
     connectionString: process.env.DATABASE_URL!
   }),
   embedder: openai.embedding("text-embedding-3-small"),
+  processors: [
+    // Filter out verbose tool calls to save tokens
+    new ToolCallFilter({ exclude: ["semantic-storage", "semantic-recall"] }),
+    // Limit memory to prevent context window overflow
+    new TokenLimiter(127000), // GPT-4o context limit
+  ],
   options: {
     threads: {
-      generateTitle: true
+      generateTitle: {
+        model: openai("gpt-4o-mini"),
+        instructions: "Generate a concise, descriptive title for this conversation thread based on the user's message."
+      }
     },
-    lastMessages: 25, // Increased for better context
+    lastMessages: 10, // Standard from examples
     semanticRecall: {
-      topK: 5,              // Retrieve top 5 most relevant memories
-      messageRange: 3       // Include 3 messages before/after for context
+      topK: 3,              // Standard from examples
+      messageRange: 2,      // Standard from examples
+      scope: 'resource'     // Enable cross-thread memory
     },
     workingMemory: {
       enabled: true,
       scope: 'resource',
-      template: `# OmniAgent User Profile
-## Identity & Role
-- **Name**: 
-- **Role/Title**: 
-- **Organization**: 
-- **Primary Goals**: 
-- **Communication Style**: 
+      // Proper template format following official examples
+      template: `# User Profile
 
-## Technical Environment
-- **Tech Stack**: 
-- **Preferred Tools**: 
-- **Development Environment**: 
-- **API Keys/Integrations**: 
+## Personal Info
+- Name:
+- Location:
+- Timezone:
 
-## Work Patterns
-- **Working Hours**: 
-- **Time Zone**: 
-- **Response Detail Level**: 
-- **Preferred Formats**: 
+## Preferences
+- Communication Style: [e.g., Formal, Casual]
+- Project Goal:
+- Key Deadlines:
+  - [Deadline 1]: [Date]
+  - [Deadline 2]: [Date]
 
-## Current Context
-- **Active Projects**: 
-- **Current Focus**: 
-- **Important Deadlines**: 
-- **Recent Achievements**: 
+## Session State
+- Last Task Discussed:
+- Open Questions:
+  - [Question 1]
+  - [Question 2]
 
-## Specialized Areas
-### Research Preferences
-- **Research Depth**: 
-- **Trusted Sources**: 
-- **Research Patterns**: 
+## Agent-Specific Context
+### Research Agent
+- Research Depth:
+- Trusted Sources:
+- Research Patterns:
 
-### Email Management
-- **Email Accounts**: 
-- **Communication Style**: 
-- **Priority Contacts**: 
-- **Email Templates**: 
+### Email Agent
+- Email Accounts:
+- Communication Style:
+- Priority Contacts:
 
-### Development Preferences
-- **Primary Languages**: 
-- **Framework Choices**: 
-- **Code Style**: 
-- **Testing Approach**: 
+### Coding Agent
+- Primary Languages:
+- Framework Choices:
+- Code Style:
+- Testing Approach:
 
-### Personal Organization
-- **Schedule Patterns**: 
-- **Task Management**: 
-- **Reminder Preferences**: 
-- **Personal Interests**: 
-
-## Learning & Growth
-- **Learning Goals**: 
-- **Skill Development**: 
-- **Areas for Improvement**: 
-- **Success Metrics**: 
-
-## Notes & Insights
-- **Important Notes**: 
-- **Key Insights**: 
-- **Follow-ups Needed**: 
-- **Long-term Goals**: `
+### Personal Assistant
+- Schedule Patterns:
+- Task Management:
+- Reminder Preferences:`
     }
   }
 });

@@ -13,7 +13,8 @@
     "test:client": "tsx src/client-example.ts",
     "test:refactored": "tsx src/test-refactored-system.ts",
     "test:final": "tsx src/test-final-refactored.ts",
-    "cleanup:verify": "tsx src/cleanup-old-patterns.ts"
+    "db:init": "tsx src/mastra/scripts/init-pgvector.ts",
+    "db:schema": "tsx src/mastra/scripts/create-memory-schema.ts"
   },
   "keywords": [],
   "type": "module",

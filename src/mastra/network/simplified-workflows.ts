@@ -34,7 +34,7 @@ export const researchWorkflow = createWorkflow({
       keyInsights: z.array(z.string()),
       sources: z.array(z.string()),
     }),
-    execute: async ({ inputData }) => {
+    execute: async ({ inputData, mastra }) => {
       const result = await researchAgent.generate(
         `Conduct comprehensive research on: ${inputData.topic}
         
@@ -50,6 +50,10 @@ export const researchWorkflow = createWorkflow({
             sources: z.array(z.string()),
           }),
           maxSteps: 5,
+          memory: {
+            resource: "research-workflow",
+            thread: `research-${inputData.topic.toLowerCase().replace(/\s+/g, '-')}`,
+          },
         }
       );
       
@@ -88,7 +92,7 @@ export const emailWorkflow = createWorkflow({
       response: z.string().optional(),
       recommendations: z.array(z.string()),
     }),
-    execute: async ({ inputData }) => {
+    execute: async ({ inputData, mastra }) => {
       const result = await emailAgent.generate(
         `Analyze this email and provide ${inputData.action}: ${inputData.emailContent}
         
@@ -103,6 +107,10 @@ export const emailWorkflow = createWorkflow({
             recommendations: z.array(z.string()),
           }),
           maxSteps: 5,
+          memory: {
+            resource: "email-workflow",
+            thread: `email-${inputData.sender || 'unknown'}-${Date.now()}`,
+          },
         }
       );
       
@@ -143,7 +151,7 @@ export const codingWorkflow = createWorkflow({
       recommendations: z.array(z.string()),
       issues: z.array(z.string()),
     }),
-    execute: async ({ inputData }) => {
+    execute: async ({ inputData, mastra }) => {
       const result = await codingAgent.generate(
         `Analyze this ${inputData.language} code and provide ${inputData.action}: ${inputData.code}
         
@@ -158,6 +166,10 @@ export const codingWorkflow = createWorkflow({
             issues: z.array(z.string()),
           }),
           maxSteps: 5,
+          memory: {
+            resource: "coding-workflow",
+            thread: `coding-${inputData.language}-${Date.now()}`,
+          },
         }
       );
       

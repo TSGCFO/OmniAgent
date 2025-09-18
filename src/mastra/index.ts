@@ -11,7 +11,8 @@ import { format } from "node:util";
 import { sharedPostgresStorage } from "./storage";
 import { inngest, inngestServe } from "./inngest";
 import { assistantWorkflow } from "./workflows/assistantWorkflow";
-import { omniNetworkSimplified } from "./network/omni-network-simplified";
+import { omniAgent } from "./agents/omniAgent";
+import { researchWorkflow, emailWorkflow, codingWorkflow } from "./network/simplified-workflows";
 import { getClient, registerSlackTrigger } from "../triggers/slackTriggers";
 
 class ProductionPinoLogger extends MastraLogger {
@@ -55,24 +56,20 @@ class ProductionPinoLogger extends MastraLogger {
   }
 }
 
-// Initialize the OmniAgent Network on startup
-(async () => {
-  try {
-    console.log("🚀 Initializing OmniAgent Network...");
-    
-    // The network will handle tool loading internally
-    console.log("✅ OmniAgent Network initialized and ready");
-  } catch (error) {
-    console.error("❌ Failed to initialize OmniAgent Network:", error);
-  }
-})();
+// Initialize OmniAgent on startup
+console.log("🚀 OmniAgent system initialized and ready");
 
 export const mastra = new Mastra({
   storage: sharedPostgresStorage,
-  vnext_networks: {
-    'omni-network': omniNetworkSimplified,
+  agents: {
+    omniAgent,
   },
-  workflows: { assistantWorkflow },
+  workflows: {
+    assistantWorkflow,
+    researchWorkflow,
+    emailWorkflow,
+    codingWorkflow,
+  },
   bundler: {
     // A few dependencies are not properly picked up by
     // the bundler if they are not added directly to the
@@ -207,10 +204,3 @@ if (Object.keys(mastra.getWorkflows()).length > 1) {
   );
 }
 
-/*  Sanity check 2: Throw an error if there are more than 1 vNext networks.  */
-// !!!!!! Do not remove this check. !!!!!!
-if (Object.keys(mastra.getNetworks()).length > 1) {
-  throw new Error(
-    "More than 1 vNext networks found. Currently, more than 1 vNext networks are not supported in the UI, since doing so will cause app state to be inconsistent.",
-  );
-}
